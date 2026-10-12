@@ -61,25 +61,5 @@ pipeline {
         stage('Verify deployment') {
             steps {
                 sh '''
-                    docker service ls
-                    docker stack services "$STACK_NAME"
-                    for attempt in $(seq 1 15); do
-                        if curl --fail --silent http://127.0.0.1:8082/; then
-                            exit 0
-                        fi
-                        echo "Waiting for application (attempt $attempt/15)..."
-                        sleep 2
-                    done
-                    echo "Application verification failed"
-                    exit 1
-                '''
-            }
-        }
-    }
-
-    post {
-        always {
-            sh 'docker logout || true'
-        }
-    }
-}
+                    echo "Waiting for Swarm tasks to settle..."
+                    for attempt in
