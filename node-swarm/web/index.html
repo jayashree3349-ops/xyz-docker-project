@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XYZ Corporation</title>
+</head>
+<body>
+  <h1>XYZ Corporation</h1>
+  <p>Node.js Web Service</p>
+  <p id="status">Checking API...</p>
+  <script>
+    fetch('/api/')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('status').textContent =
+          `${data.service}: ${data.status}`;
+      })
+      .catch(() => {
+        document.getElementById('status').textContent =
+          'API is currently unavailable';
+      });
+  </script>
+</body>
+</html>

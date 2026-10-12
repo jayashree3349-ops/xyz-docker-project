@@ -1,0 +1,72 @@
+```groovy
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'jayashree0009/xyz-cicd-app'
+        STACK_NAME = 'xyz-cicd'
+    }
+
+    stages {
+        stage('Test') {
+            steps {
+                dir('jenkins-cicd/app') {
+                    sh 'python3 -m unittest -v test_app.py'
+                }
+            }
+        }
+
+        stage('Build image') {
+            steps {
+                sh 'docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} jenkins-cicd/app'
+            }
+        }
+
+        stage('Push image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKERHUB_USER',
+                    passwordVariable: 'DOCKERHUB_TOKEN'
+                )]) {
+                    sh '''
+                        set +x
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                          -u "$DOCKERHUB_USER" --password-stdin
+                        docker push "${IMAGE_NAME}:${BUILD_NUMBER}"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Swarm') {
+            steps {
+                sh '''
+                    export IMAGE_TAG="${BUILD_NUMBER}"
+                    docker stack deploy \
+                      --with-registry-auth \
+                      -c jenkins-cicd/deploy-compose.yml "$STACK_NAME"
+                '''
+            }
+        }
+
+        stage('Verify deployment') {
+            steps {
+                sh '''
+                    docker service ls
+                    docker stack services "$STACK_NAME"
+                    curl --fail --retry 5 --retry-delay 2 \
+                      http://127.0.0.1:8082/
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout || true'
+        }
+    }
+}
+
+```

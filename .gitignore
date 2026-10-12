@@ -3,3 +3,11 @@ target/
 .env
 .idea/
 .vscode/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local upload test data
+python-uploads/test-upload.txt

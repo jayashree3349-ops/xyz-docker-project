@@ -1,0 +1,12 @@
+services:
+  upload-app:
+    build: .
+    image: xyz-upload-app:1.0.0
+    ports:
+      - "5000:5000"
+    volumes:
+      - uploads_data:/data
+    restart: unless-stopped
+
+volumes:
+  uploads_data:

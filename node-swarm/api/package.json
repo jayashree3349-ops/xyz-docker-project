@@ -1,0 +1,13 @@
+{
+  "name": "xyz-api",
+  "version": "1.0.0",
+  "description": "XYZ Corporation Node.js API",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  }
+}
