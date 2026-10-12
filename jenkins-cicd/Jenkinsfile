@@ -40,12 +40,21 @@ pipeline {
 
         stage('Deploy to Swarm') {
             steps {
-                sh '''
-                    export IMAGE_TAG="${BUILD_NUMBER}"
-                    docker stack deploy \
-                      --with-registry-auth \
-                      -c jenkins-cicd/deploy-compose.yml "$STACK_NAME"
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKERHUB_USER',
+                    passwordVariable: 'DOCKERHUB_TOKEN'
+                )]) {
+                    sh '''
+                        set +x
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                          -u "$DOCKERHUB_USER" --password-stdin
+                        export IMAGE_TAG="${BUILD_NUMBER}"
+                        docker stack deploy \
+                          --with-registry-auth \
+                          -c jenkins-cicd/deploy-compose.yml "$STACK_NAME"
+                    '''
+                }
             }
         }
 
@@ -54,8 +63,15 @@ pipeline {
                 sh '''
                     docker service ls
                     docker stack services "$STACK_NAME"
-                    curl --fail --retry 5 --retry-delay 2 \
-                      http://127.0.0.1:8082/
+                    for attempt in $(seq 1 15); do
+                        if curl --fail --silent http://127.0.0.1:8082/; then
+                            exit 0
+                        fi
+                        echo "Waiting for application (attempt $attempt/15)..."
+                        sleep 2
+                    done
+                    echo "Application verification failed"
+                    exit 1
                 '''
             }
         }
@@ -67,5 +83,3 @@ pipeline {
         }
     }
 }
-
-
