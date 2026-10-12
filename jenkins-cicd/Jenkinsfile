@@ -30,7 +30,8 @@ pipeline {
                 )]) {
                     sh '''
                         set +x
-                        echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                            -u "$DOCKERHUB_USER" --password-stdin
                         docker push "${IMAGE_NAME}:${BUILD_NUMBER}"
                     '''
                 }
@@ -46,9 +47,15 @@ pipeline {
                 )]) {
                     sh '''
                         set +x
-                        echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                            -u "$DOCKERHUB_USER" --password-stdin
+
                         export IMAGE_TAG="${BUILD_NUMBER}"
-                        docker stack deploy --with-registry-auth -c jenkins-cicd/deploy-compose.yml "$STACK_NAME"
+
+                        docker stack deploy \
+                            --with-registry-auth \
+                            -c jenkins-cicd/deploy-compose.yml \
+                            "$STACK_NAME"
                     '''
                 }
             }
@@ -60,11 +67,17 @@ pipeline {
                     echo "Waiting for Swarm tasks to settle..."
 
                     for attempt in $(seq 1 30); do
-                        replicas=$(docker service ls --filter name="${STACK_NAME}_web" --format '{{.Replicas}}')
+                        replicas=$(docker service ls \
+                            --filter name="${STACK_NAME}_web" \
+                            --format '{{.Replicas}}')
+
                         echo "Current replicas: $replicas"
 
                         if [ "$replicas" = "2/2" ]; then
-                            if curl --fail --silent --show-error --max-time 5 http://127.0.0.1:8082/; then
+                            if curl --fail --silent --show-error \
+                                --max-time 5 \
+                                http://172.31.13.158:8082/; then
+
                                 echo "Deployment verification successful"
                                 exit 0
                             fi
@@ -87,3 +100,4 @@ pipeline {
         }
     }
 }
+
